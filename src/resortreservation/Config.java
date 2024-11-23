@@ -74,30 +74,42 @@ public class Config {
     }
 
     // Update record in the database
-    public void updateRecord(String sql, Object... values) {
-        try (Connection conn = connectDB(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            for (int i = 0; i < values.length; i++) {
-                pstmt.setObject(i + 1, values[i]);
-            }
-            pstmt.executeUpdate();
-            System.out.println("Record updated successfully!");
-        } catch (SQLException e) {
-            System.out.println("Error updating record: " + e.getMessage());
+   public void updateRecord(String sql, Object... params) {
+    try (Connection conn = this.connectDB();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        for (int i = 0; i < params.length; i++) {
+            pstmt.setObject(i + 1, params[i]);
         }
+        int rowsAffected = pstmt.executeUpdate();
+        if (rowsAffected > 0) {
+            System.out.println("Record updated successfully!");
+        } else {
+            System.out.println("No record was updated.");
+        }
+    } catch (SQLException e) {
+        System.out.println("Error updating record: " + e.getMessage());
     }
+}
+
 
     // Delete record from the database
-    public void deleteRecord(String sql, Object... values) {
-        try (Connection conn = connectDB(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            for (int i = 0; i < values.length; i++) {
-                pstmt.setObject(i + 1, values[i]);
-            }
-            pstmt.executeUpdate();
-            System.out.println("Record deleted successfully!");
-        } catch (SQLException e) {
-            System.out.println("Error deleting record: " + e.getMessage());
+ public void deleteRecord(String sql, Object... params) {
+    try (Connection conn = this.connectDB();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        for (int i = 0; i < params.length; i++) {
+            pstmt.setObject(i + 1, params[i]);
         }
+        int rowsAffected = pstmt.executeUpdate();
+        if (rowsAffected > 0) {
+            System.out.println("Record deleted successfully!");
+        } else {
+            System.out.println("No record found to delete.");
+        }
+    } catch (SQLException e) {
+        System.out.println("Error deleting record: " + e.getMessage());
     }
+}
+
    public boolean recordExists(String query, Object... params) {
         try (Connection conn = connectDB();
              PreparedStatement pstmt = conn.prepareStatement(query)) {

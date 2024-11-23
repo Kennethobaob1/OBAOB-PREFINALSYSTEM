@@ -50,58 +50,68 @@ public class Reports {
     }
 
   
-    private static void viewAllReservations() {
-        config.viewRecords(
-            "SELECT r.id, c.first_name, c.last_name, ro.room_type, r.start_date, r.end_date, r.status " +
-            "FROM Reservations r " +
-            "INNER JOIN Customers c ON r.customer_id = c.id " +
-            "INNER JOIN Rooms ro ON r.room_id = ro.id",
-            new String[]{"Reservation ID", "Customer Name", "Room Type", "Start Date", "End Date", "Status"}, // Column headers to show
-            new String[]{"id", "first_name", "last_name", "room_type", "start_date", "end_date", "status"} // Field names returned by the SQL query
-        );
-    }
+  private static void viewAllReservations() {
+    config.viewRecords(
+        "SELECT r.id, c.first_name || ' ' || c.last_name AS customer_name, ro.room_type, r.start_date, r.end_date, r.status " +
+        "FROM Reservations r " +
+        "INNER JOIN Customers c ON r.customer_id = c.id " +
+        "INNER JOIN Rooms ro ON r.room_id = ro.id",
+        new String[]{"Reservation ID", "Customer Name", "Room Type", "Start Date", "End Date", "Status"}, 
+        new String[]{"id", "customer_name", "room_type", "start_date", "end_date", "status"} 
+    );
+}
 
-    private static void viewSpecificReservation() {
-        int reservationId;
-      
-        do {
-            System.out.print("Enter Reservation ID to view: ");
-            reservationId = getIntInput(scanner);
-        } while (reservationId <= 0);  
 
-        config.viewRecords(
-            "SELECT r.id, c.first_name, c.last_name, ro.room_type, r.start_date, r.end_date, r.status FROM Reservations r " +
-            "INNER JOIN Customers c ON r.customer_id = c.id " +
-            "INNER JOIN Rooms ro ON r.room_id = ro.id WHERE r.id = ?",
-            new String[]{"Reservation ID", "Customer Name", "Room Type", "Start Date", "End Date", "Status"},
-            new String[]{"id", "first_name", "last_name", "room_type", "start_date", "end_date", "status"},
-            reservationId
-        );
-    }
+   private static void viewSpecificReservation() {
+    int reservationId;
+    ReservationCRUD.viewReservations();  
+
+    
+    do {
+        System.out.print("Enter Reservation ID to view: ");
+        reservationId = getIntInput(scanner);
+    } while (reservationId <= 0);
+
+    
+    config.viewRecords(
+        "SELECT r.id, c.first_name || ' ' || c.last_name AS customer_name, " +
+        "ro.room_type, r.start_date, r.end_date, r.status " +
+        "FROM Reservations r " +
+        "INNER JOIN Customers c ON r.customer_id = c.id " +
+        "INNER JOIN Rooms ro ON r.room_id = ro.id " +
+        "WHERE r.id = ?",  
+        new String[]{"Reservation ID", "Customer Name", "Room Type", "Start Date", "End Date", "Status"},
+        new String[]{"id", "customer_name", "room_type", "start_date", "end_date", "status"},
+        reservationId  
+    );
+}
+
+
 
     private static void viewAvailableRoomsByType() {
-        System.out.print("Enter Room Type (e.g., Single, Double, Suite): ");
-        String roomType = scanner.next();
-        
-        
-        int availableRoomsCount = config.getCount(
-            "SELECT COUNT(*) FROM Rooms ro " +
+    System.out.print("Enter Room Type (e.g., Single, Double, Suite, Huge, VIP): ");
+    String roomType = scanner.next();
+    
+    
+    int availableRoomsCount = config.getCount(
+        "SELECT COUNT(*) FROM Rooms ro " +
+        "LEFT JOIN Reservations r ON ro.id = r.room_id AND r.status = 'Confirmed' " +
+        "WHERE ro.room_type = ? AND r.id IS NULL", roomType);
+    
+    
+    if (availableRoomsCount > 0) {
+        config.viewRecords(
+            "SELECT ro.id, ro.room_type FROM Rooms ro " +  
             "LEFT JOIN Reservations r ON ro.id = r.room_id AND r.status = 'Confirmed' " +
-            "WHERE ro.room_type = ? AND r.id IS NULL", roomType);
-        
-        if (availableRoomsCount > 0) {
-            config.viewRecords(
-                "SELECT r.id, ro.room_type, ro.room_number FROM Rooms ro " +
-                "LEFT JOIN Reservations r ON ro.id = r.room_id AND r.status = 'Confirmed' " +
-                "WHERE ro.room_type = ? AND r.id IS NULL",
-                new String[]{"Room ID", "Room Type", "Room Number"},
-                new String[]{"id", "room_type", "room_number"},
-                roomType
-            );
-        } else {
-            System.out.println("No available rooms of the specified type.");
-        }
+            "WHERE ro.room_type = ? AND r.id IS NULL",
+            new String[]{"Room ID", "Room Type"},  
+            new String[]{"id", "room_type"},  
+            roomType
+        );
+    } else {
+        System.out.println("No available rooms of the specified type.");
     }
+}
 
     private static void viewCustomerReservationHistory() {
         int customerId;
